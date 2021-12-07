@@ -318,6 +318,20 @@ namespace DWG2JSON
         }
 
         /// <summary>
+        /// 获取元素列表实体包围盒
+        /// </summary>
+        public static Extents3d GetExtents(this List<Entity> entList)
+        {
+            Database db = Application.DocumentManager.MdiActiveDocument.Database;
+            Extents3d extend = new Extents3d();
+            foreach (Entity ent in entList)
+            {
+                if (ent != null) extend.AddExtents(ent.GeometricExtents);
+            }
+            return extend;
+        }
+
+        /// <summary>
         /// 获取实体Id
         /// </summary>
         public static ObjectId GetEntityId(this Document doc, string message)

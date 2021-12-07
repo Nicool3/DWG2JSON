@@ -150,6 +150,7 @@ namespace DWG2JSON
         public double[] Center { get; set; }
         public double Length { get; set; }    // 实体包围盒长度-X方向
         public double Width { get; set; }     // 实体包围盒宽度-Y方向
+        public double Scale { get; set; }
         public List<LineInfo> LineInfoList { get; set; }
         public List<CircleInfo> CircleInfoList { get; set; }
         public List<TextInfo> TextInfoList { get; set; }
@@ -261,7 +262,7 @@ namespace DWG2JSON
             }
         }
 
-        public ComInfo(SelectionSet ss, string name)
+        public ComInfo(SelectionSet ss, string name, double scale=1)
         {
             Point3d pointMin = ss.GetGeometricExtents()[0];  // 实体包围盒左下角点
             Point3d pointMax = ss.GetGeometricExtents()[1];  // 实体包围盒右上角点
@@ -269,6 +270,7 @@ namespace DWG2JSON
             Center = new double[] { Math.Round(pointCenter.X, 3), Math.Round(pointCenter.Y, 3) };
             Length = Math.Round(pointMax.X - pointMin.X, 3);
             Width = Math.Round(pointMax.Y - pointMin.Y, 3);
+            Scale = scale;
 
             List<Line> LineList = ss.SelectType<Line>();
             List<Circle> CircleList = ss.SelectType<Circle>();
@@ -291,18 +293,19 @@ namespace DWG2JSON
                 TextList.AddRange(mtext.ConvertToTexts());
 
             Name = name;
-            LineInfoList = LineList.Select(s => new LineInfo(s, pointCenter)).ToList();
-            CircleInfoList = CircleList.Select(s => new CircleInfo(s, pointCenter)).ToList();
-            TextInfoList = TextList.Select(s => new TextInfo(s, pointCenter)).ToList();
+            LineInfoList = LineList.Select(s => new LineInfo(s, pointCenter)).OrderBy(s=>s.X).ThenBy(s => s.Y).ToList();
+            CircleInfoList = CircleList.Select(s => new CircleInfo(s, pointCenter)).OrderBy(s => s.X).ThenBy(s => s.Y).ToList();
+            TextInfoList = TextList.Select(s => new TextInfo(s, pointCenter)).OrderBy(s => s.X).ThenBy(s => s.Y).ToList();
         }
 
-        public ComInfo(string name, double[] center, double length, double width,
+        public ComInfo(string name, double[] center, double length, double width, double scale,
             List<LineInfo> lineInfoList, List<CircleInfo> circleInfoList, List<TextInfo> textInfoList)
         {
             Name = name;
             Center = center;
             Length = length;
             Width = width;
+            Scale = scale;
             LineInfoList = lineInfoList;
             CircleInfoList = circleInfoList;
             TextInfoList = textInfoList;
@@ -314,6 +317,7 @@ namespace DWG2JSON
             Center = new double[3];
             Length = 0;
             Width = 0;
+            Scale = 1;
             LineInfoList = new List<LineInfo>();
             CircleInfoList = new List<CircleInfo>();
             TextInfoList = new List<TextInfo>();
@@ -324,7 +328,7 @@ namespace DWG2JSON
             if (obj.GetType() == typeof(ComInfo))
             {
                 ComInfo comInfo2 = obj as ComInfo;
-                if (comInfo2.Name == Name && comInfo2.Center == Center && comInfo2.Length == Length && comInfo2.Width == Width &&
+                if (comInfo2.Name == Name && comInfo2.Center == Center && comInfo2.Length == Length && comInfo2.Width == Width && comInfo2.Scale == Scale &&
                     comInfo2.LineInfoList == LineInfoList && comInfo2.CircleInfoList == CircleInfoList && comInfo2.TextInfoList == TextInfoList)
                     return true;
                 else
@@ -422,7 +426,7 @@ namespace DWG2JSON
             {
                 DBText text = new DBText();
                 text.Position = new Point3d(textInfo.X + Center[0], textInfo.Y + Center[1], 0);
-                text.Height = textHeight;
+                text.Height = textHeight*Scale;
                 text.TextString = textInfo.TextString;
                 db.AddEntity(text);
             }
@@ -1117,6 +1121,23 @@ namespace DWG2JSON
                 }
                 trans.Commit();
             }
+        }
+    }
+
+    /// <summary>
+    /// 样式
+    /// </summary>
+    public static class OtherInfo
+    {
+        public static bool IsDrawingBorder(this Entity ent)
+        {
+            if (ent.GetType() == typeof(BlockReference))
+            {
+                BlockReference br = ent as BlockReference;
+                if (br.Name.Contains("A1") || br.Name.Contains("A2") || br.Name.Contains("A3") || br.Name.Contains("A4") || br.Name.Contains("图纸目录"))
+                    return true;
+            }
+            return false;
         }
     }
 }

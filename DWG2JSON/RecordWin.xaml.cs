@@ -24,6 +24,7 @@ namespace DWG2JSON
         public RecordWin(List<ComInfo> comInfoList)
         {
             InitializeComponent();
+            this.Closing += Window_Closing;
             this.scaleFactor.Text = Properties.Settings.Default.scaleFactorDefault;
             List<ComInfo> uniqueNameList = comInfoList.GroupBy(x => x.Name).Select(y => y.First()).ToList();
             comboBox1.ItemsSource = uniqueNameList;

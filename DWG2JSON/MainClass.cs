@@ -202,9 +202,10 @@ namespace DWG2JSON
         {
             // 读取现有记录
             List<ComInfo> infoList = new List<ComInfo>();
-            string path = @"C:\Users\skq199101\Source\Repos\DWG2JSON\ComInfo.json";
+            string path = @"C:\Users\skq199101\Source\Repos\DWG2JSON\DetailComInfo.json";
             string jsonString = ReadJsonFile(path);
             JavaScriptSerializer js = new JavaScriptSerializer();
+            js.MaxJsonLength = (int)1e+8;
             if (!string.IsNullOrEmpty(jsonString)) infoList = js.Deserialize<List<ComInfo>>(jsonString);
             // 创建窗体
             RecordWin win = new RecordWin(infoList);
@@ -212,13 +213,14 @@ namespace DWG2JSON
             if (result.HasValue && result.Value)
             {
                 string name = win.comboBox1.Text;
+                double scale = win.Scale;
                 if (!string.IsNullOrEmpty(name))
                 {
                     List<ComInfo> newInfoList = new List<ComInfo>();
                     SelectionSet ss = doc.GetSelectionSet("Select something to create a record");
                     while (ss != null)
                     {
-                        ComInfo info = new ComInfo(ss, name);
+                        ComInfo info = new ComInfo(ss, name, scale);
                         if (info != null) newInfoList.Add(info);
                         ss = doc.GetSelectionSet("Continue to select something");
                     }
@@ -237,6 +239,25 @@ namespace DWG2JSON
                 {
                     MessageBox.Show("请选择或输入正确的名称！");
                 }
+            }
+        }
+
+        /// <summary>
+        /// 创建临时单条图素记录
+        /// </summary>
+        [CommandMethod("CTR")]
+        public void CreateTempRecord()
+        {
+            string path = @"C:\Users\skq199101\Source\Repos\DWG2JSON\DetailComInfoTemp.json";
+            JavaScriptSerializer js = new JavaScriptSerializer();
+            js.MaxJsonLength = (int)1e+8;
+
+            SelectionSet ss = doc.GetSelectionSet("Select something to recognize");
+            if(ss != null)
+            {
+                ComInfo info = new ComInfo(ss, "", 1);
+                string info1Json = js.Serialize(info);//序列化    
+                OverWriteToJsonFile(path, info1Json);
             }
         }
 
@@ -461,28 +482,35 @@ namespace DWG2JSON
 
             if (ss0 != null)
             {
-                List<Entity> entList = ss0.GetSelectedEntity();      // 所选的全部实体对象
+                List<Entity> entList = ss0.GetSelectedEntity().Where(s => !s.IsDrawingBorder()).ToList();      // 所选的除图框外全部实体对象
                 List<Entity> entListCollected = new List<Entity>();  // 已进行分区的实体对象
                 List<Rectangle> recList = new List<Rectangle>();     // 分区矩形列表
                 foreach (Entity ent in entList)
                 {
                     if (!entListCollected.Contains(ent))
                     {
-                        SelectionSet ssTemp = null;
                         List<Entity> entListTemp = new List<Entity>() { ent };
+                        SelectionSet ssTemp = null;
+                        List<Entity> ssTempEntList = new List<Entity>();
                         Extents3d extend = new Extents3d();
                         extend.AddExtents(ent.GeometricExtents);
                         if (extend != null)
                         {
+                            int iterCount = 0;
                             do
                             {
-                                if (ssTemp != null) entListTemp.AddRange(ssTemp.GetSelectedEntity().Where(s => !entListTemp.Contains(s)));
+                                entListTemp.AddRange(ssTempEntList.Where(s => !entListTemp.Contains(s)));
                                 Point3d pointMin = extend.MinPoint - offsetDistance * new Vector3d(1, 1, 0);
                                 Point3d pointMax = extend.MaxPoint + offsetDistance * new Vector3d(1, 1, 0);
                                 ssTemp = doc.GetCrossSelectionSet(pointMin, pointMax);
-                                if (ssTemp != null) extend = ssTemp.GetExtents();
+                                if (ssTemp != null)
+                                {
+                                    ssTempEntList = ssTemp.GetSelectedEntity().Where(s => !s.IsDrawingBorder()).ToList();
+                                    extend = ssTempEntList.GetExtents();
+                                }
+                                iterCount++;
                             }
-                            while (ssTemp != null && ssTemp.Count > entListTemp.Count);
+                            while (ssTempEntList.Count > entListTemp.Count && iterCount < 100);
                             entListCollected.AddRange(entListTemp.Where(s => !entListCollected.Contains(s)));     
                             recList.Add(new Rectangle(extend.MinPoint - 0.5 * offsetDistance * new Vector3d(1, 1, 0), extend.MaxPoint + 0.5 * offsetDistance * new Vector3d(1, 1, 0)));
                         }
@@ -510,18 +538,24 @@ namespace DWG2JSON
             */
             ObjectId id = doc.GetEntityId("Select");
             Entity ent = id.GetEntity();
-            List<Entity> entList = new List<Entity>();
-            if (ent.GetType() == typeof(BlockReference))
-            {
-                BlockReference br = (BlockReference)ent;
-                entList.AddRange(br.GetAllEntities());
-            }
-            ed.WriteMessage(entList.Count.ToString());
+
+            ed.WriteMessage(ent.IsDrawingBorder().ToString());
         }
 
         public void WriteToJsonFile(string path, string jsonContents)
         {
             using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite))
+            {
+                using (StreamWriter sw = new StreamWriter(fs, Encoding.UTF8))
+                {
+                    sw.WriteLine(jsonContents);
+                }
+            }
+        }
+
+        public void OverWriteToJsonFile(string path, string jsonContents)
+        {
+            using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite))
             {
                 using (StreamWriter sw = new StreamWriter(fs, Encoding.UTF8))
                 {
