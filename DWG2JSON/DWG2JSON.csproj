@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>DWG2JSON</RootNamespace>
     <AssemblyName>DWG2JSON</AssemblyName>
-    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -36,27 +36,23 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="accoremgd">
-      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\AutoCAD 2018\accoremgd.dll</HintPath>
+      <HintPath>..\..\..\..\..\Program Files\Autodesk\ObjectARX_for_AutoCAD_2020_Win_64_bit\inc\AcCoreMgd.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="acdbmgd">
-      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\AutoCAD 2018\acdbmgd.dll</HintPath>
+      <HintPath>..\..\..\..\..\Program Files\Autodesk\ObjectARX_for_AutoCAD_2020_Win_64_bit\inc\AcDbMgd.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="acmgd">
-      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\AutoCAD 2018\acmgd.dll</HintPath>
+      <HintPath>..\..\..\..\..\Program Files\Autodesk\ObjectARX_for_AutoCAD_2020_Win_64_bit\inc\AcMgd.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Autodesk.AutoCAD.Interop">
-      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Autodesk_ObjectARX_2018_Win_64_and_32_Bit\inc-win32\Autodesk.AutoCAD.Interop.dll</HintPath>
+      <HintPath>..\..\..\..\..\Program Files\Autodesk\ObjectARX_for_AutoCAD_2020_Win_64_bit\inc-x64\Autodesk.AutoCAD.Interop.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
-    <Reference Include="Python.Runtime, Version=2.5.2.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>..\packages\pythonnet_py36_win.2.5.2\lib\net40\Python.Runtime.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Serialization" />

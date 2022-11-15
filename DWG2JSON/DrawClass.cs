@@ -176,7 +176,7 @@ namespace DWG2JSON
         public DBText ReinText { get; set; }
         public double Scale { get; set; }
 
-        public CornerReinDraw(double scale, string reinValue, Line[] lineBase, Point3d pointBase)
+        public CornerReinDraw(double scale, string reinValue, Line[] lineBase, Point3d pointBase, Boolean reinOnly = false)
         {
             double reinPointRadius = scale * 20;
             double reinDistance = scale * 40;
@@ -215,12 +215,14 @@ namespace DWG2JSON
                     LineArray[3] = new Line(inters[0], inters[0] + lineLength1 * (pointBase - inters[0]).GetNormal());
                     Vector3d vh = (LineArray[3].EndPoint - LineArray[3].StartPoint).GetNormal();
                     Vector3d vv = new Vector3d(0, 1, 0);
+                    if (!reinOnly) { 
                     if (vh.X.IsAlmostEqualTo(1))
                         ReinText = db.CreateText("4%%133" + reinValue, inters[0] + (space*6) * vh + space * vv,
                         textHeight, 0, 0.7, "SMEDI", TextHorizontalMode.TextLeft, textV);
                     else
                         ReinText = db.CreateText("4%%133" + reinValue, inters[0] + (space * 6) * vh + space * vv,
                         textHeight, 0, 0.7, "SMEDI", TextHorizontalMode.TextRight, textV);
+                    }
                 }
             }
         }

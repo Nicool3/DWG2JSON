@@ -91,6 +91,19 @@ namespace DWG2JSON
             DialogResult = true;
         }
 
+        private void confirmPointsOnlyButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!IsNumber(this.reinPointsText.Text) || !IsNumber(this.scalePointsFactor.Text))
+            {
+                MessageBox.Show("请填写正确的钢筋直径及比例信息！");
+                DialogResult = false;
+            }
+            PointsScale = 1 / Convert.ToDouble(this.scalePointsFactor.Text);
+            ReinPointsValue = this.reinPointsText.Text;
+            CommandToExecute = Command.CreateReinPoints;
+            DialogResult = true;
+        }
+
         private void cancelPointsButton_Click(object sender, RoutedEventArgs e)
         {
             DialogResult = false;

@@ -344,11 +344,11 @@ namespace DWG2JSON
                 // 获取的多段线按面积排序，取最大的为最外圈边线
                 plineList = plineList.OrderByDescending(s => s.Area).ToList();
                 Polyline plineBoundary = plineList[0];
-                // 偏移外圈和内圈多段线
+                // 偏移外圈多段线
                 Polyline plineBoundaryOffset = plineBoundary.GetOffsetCurves((double)offsetDistance)[0] as Polyline;
                 if (plineBoundaryOffset.Area > plineBoundary.Area) plineBoundaryOffset = plineBoundary.GetOffsetCurves(-(double)offsetDistance)[0] as Polyline;
                 lineList.AddRange(plineBoundaryOffset.ConvertToLines());
-
+                // 偏移内圈多段线
                 foreach (Polyline pline in plineList)
                 {
                     if (pline != plineBoundary)
@@ -416,20 +416,20 @@ namespace DWG2JSON
                         overkilledLineList.Add(newLine);
                     }
                 }
-
+                
                 db.SetLayerCurrent("结-钢筋", 1);
                 foreach (Line line in overkilledLineList)
                 {
+                    line.Layer = "结-钢筋";
                     db.AddEntity(line);
                 }
-                db.SetLayerCurrent("结-细线", 7);
             }
         }
 
         /// <summary>
         /// 选择纵筋绘制转角点筋
         /// </summary>
-        public void CreateReinPoints(double scale, string reinValue)
+        public void CreateReinPoints(double scale, string reinValue, Boolean reinOnly=false)
         {
             SelectionSet ss = doc.GetSelectionSet("请选择4条相交的钢筋直线", "LINE".ToTypeFilter());
             while (ss != null)
