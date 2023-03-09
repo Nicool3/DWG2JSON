@@ -526,6 +526,45 @@ namespace DWG2JSON
         }
 
         /// <summary>
+        /// 选择相似钢筋编号
+        /// </summary>
+        [CommandMethod("SSBH")]
+        public void SelectSimilarReinNum()
+        {
+            bool reinOnly = ed.GetBoolKeywordOnScreen("是否只选择包含钢筋信息的块？");
+            ObjectId id = doc.GetEntityId("请选择钢筋编号块");
+            if (id != null && id!= ObjectId.Null)
+            {
+                using (Transaction trans = db.TransactionManager.StartTransaction())
+                {
+                    BlockReference br = (BlockReference)id.GetObject(OpenMode.ForRead);
+                    foreach (ObjectId item in br.AttributeCollection)
+                    {
+                        AttributeReference AttRef = (AttributeReference)item.GetObject(OpenMode.ForRead);
+                        if (AttRef.Tag.ToString().Contains("钢筋编号"))
+                        {
+                            string reinNum = AttRef.TextString;
+                            SelectionSet ssAll = doc.Editor.SelectAll().Value;
+                            List<BlockReference> brList = ssAll.SelectType<BlockReference>();
+                            List<ObjectId> idList = new List<ObjectId>();
+                            foreach (BlockReference subbr in brList)
+                            {
+                                foreach (ObjectId subitem in subbr.AttributeCollection)
+                                {
+                                    AttributeReference subAttRef = (AttributeReference)subitem.GetObject(OpenMode.ForRead);
+                                    if (subAttRef.Tag.ToString().Contains("钢筋编号") && subAttRef.TextString==reinNum) idList.Add(subbr.ObjectId);
+                                }
+                            }
+                            ed.WriteMessage("共发现"+ idList.Count.ToString() + "条相同的钢筋编号");
+                            ed.SetImpliedSelection(idList.ToArray());
+                        }
+                    }
+                    trans.Commit();
+                }
+            }
+        }
+
+        /// <summary>
         /// 测试
         /// </summary>
         [CommandMethod("CS")]

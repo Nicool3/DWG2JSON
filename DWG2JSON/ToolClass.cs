@@ -91,6 +91,23 @@ namespace DWG2JSON
         }
 
         /// <summary>
+        /// 输入布尔类型关键字
+        /// </summary>
+        public static bool GetBoolKeywordOnScreen(this Editor ed, string message)
+        {
+            PromptKeywordOptions Opts = new PromptKeywordOptions("");
+            Opts.Message = message;
+            Opts.Keywords.Add("Y", "Y", "是(Y)");
+            Opts.Keywords.Add("N", "N", "否(N)");
+            Opts.Keywords.Default = "Y";
+            Opts.AllowNone = true;
+
+            PromptResult Res = ed.GetKeywords(Opts);
+            if (Res.StringResult == "Y") return true;
+            else return false;
+        }
+
+        /// <summary>
         /// 屏幕取点
         /// </summary>
         public static Point3d? GetPoint(this Document doc, string message)
