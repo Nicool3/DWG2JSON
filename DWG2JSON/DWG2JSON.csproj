@@ -36,19 +36,19 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="accoremgd">
-      <HintPath>..\..\..\..\..\Program Files\Autodesk\Autodesk_ObjectARX_2018_Win_64_and_32_Bit\inc\AcCoreMgd.dll</HintPath>
+      <HintPath>..\..\..\..\..\Program Files\Autodesk\ObjectARX_for_AutoCAD_2020_Win_64_bit\inc\AcCoreMgd.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="acdbmgd">
-      <HintPath>..\..\..\..\..\Program Files\Autodesk\Autodesk_ObjectARX_2018_Win_64_and_32_Bit\inc\AcDbMgd.dll</HintPath>
+      <HintPath>..\..\..\..\..\Program Files\Autodesk\ObjectARX_for_AutoCAD_2020_Win_64_bit\inc\AcDbMgd.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="acmgd">
-      <HintPath>..\..\..\..\..\Program Files\Autodesk\Autodesk_ObjectARX_2018_Win_64_and_32_Bit\inc\AcMgd.dll</HintPath>
+      <HintPath>..\..\..\..\..\Program Files\Autodesk\ObjectARX_for_AutoCAD_2020_Win_64_bit\inc\AcMgd.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Autodesk.AutoCAD.Interop">
-      <HintPath>..\..\..\..\..\Program Files\Autodesk\Autodesk_ObjectARX_2018_Win_64_and_32_Bit\inc-win32\Autodesk.AutoCAD.Interop.dll</HintPath>
+      <HintPath>..\..\..\..\..\Program Files\Autodesk\ObjectARX_for_AutoCAD_2020_Win_64_bit\inc-x64\Autodesk.AutoCAD.Interop.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="PresentationCore" />
