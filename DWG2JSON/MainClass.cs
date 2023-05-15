@@ -565,6 +565,38 @@ namespace DWG2JSON
         }
 
         /// <summary>
+        /// 垂直翻转
+        /// </summary>
+        [CommandMethod("MIRRORV")]
+        public void MirrorV()
+        {
+            SelectionSet ss = doc.GetSelectionSet("Select");
+            Point3d[] pts = ss.GetGeometricExtents();
+
+            Point3d pt1 = new Point3d(pts[0].X,(pts[0].Y+pts[1].Y)/2,pts[0].Z);
+            Point3d pt2 = new Point3d(pts[1].X,(pts[0].Y+pts[1].Y)/2,pts[1].Z);
+
+            using (Transaction trans = db.TransactionManager.StartTransaction())
+            {
+                foreach (SelectedObject obj in ss)
+                {
+                    if (obj != null)
+                    {
+                        try
+                        {
+                            ObjectId objId = obj.ObjectId;
+                            Entity ent = (Entity)objId.GetObject(OpenMode.ForWrite);
+                            if (ent.GetType() == typeof(DBText) || ent.GetType() == typeof(MText)) objId.MirrorText();
+                            objId.MirrorEntity(pt1, pt2, true);
+                        }
+                        catch { }
+                    }
+                }
+                trans.Commit();
+            }
+        }
+
+        /// <summary>
         /// 测试
         /// </summary>
         [CommandMethod("CS")]

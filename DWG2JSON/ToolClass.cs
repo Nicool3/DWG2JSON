@@ -573,5 +573,208 @@ namespace DWG2JSON
             Point3d pointMax = new Point3d((view.CenterPoint.X + view.Width / 2), (view.CenterPoint.Y + view.Height / 2), 0);
             return new Point3d[] { pointMin, pointMax };
         }
+
+        /// <summary>
+        /// 镜像图形
+        /// </summary>
+        /// <param name="ent">图形对象的ObjectId</param>
+        /// <param name="point1">第一个镜像点</param>
+        /// <param name="point2">第二个镜像点</param>
+        /// <param name="isEraseSource">是否删除原图形</param>
+        /// <returns>返回新的图形对象  加入图形数据库的情况</returns>
+        public static Entity MirrorEntity(this ObjectId entId, Point3d point1, Point3d point2, bool isEraseSource)
+        {
+            Document doc = Application.DocumentManager.MdiActiveDocument;
+
+            // 打开当前图形数据库
+            Database db = HostApplicationServices.WorkingDatabase;
+            Editor ed = doc.Editor;
+            // 声明一个图形对象用于返回
+            Entity entR;
+            // 计算镜像的变换矩阵
+            Matrix3d mt = Matrix3d.Mirroring(new Line3d(point1, point2));
+            // 打开事务处理
+            using (Transaction trans = db.TransactionManager.StartTransaction())
+            {
+                // 打开块表
+                BlockTable bt = (BlockTable)trans.GetObject(db.BlockTableId, OpenMode.ForRead);
+                // 打开块表记录
+                BlockTableRecord btr = (BlockTableRecord)trans.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForRead);
+
+                // 判断是否删除原对象
+                if (isEraseSource)
+                {
+                    // 打开原对象
+                    Entity ent = (Entity)entId.GetObject(OpenMode.ForWrite);
+                    // 执行变换
+                    ent.TransformBy(mt);
+                    entR = ent;
+                }
+                else
+                {
+
+                    // 打开原对象
+                    Entity ent = (Entity)entId.GetObject(OpenMode.ForRead);
+                    entR = ent.GetTransformedCopy(mt);
+                }
+                trans.Commit();
+            }
+            return entR;
+        }
+
+        /// <summary>
+        /// 镜像文字-关于自身镜像
+        /// </summary>
+        public static Entity MirrorText(this ObjectId entId)
+        {
+            // 打开当前图形数据库
+            Document doc = Application.DocumentManager.MdiActiveDocument;
+            Database db = HostApplicationServices.WorkingDatabase;
+            Editor ed = doc.Editor;
+
+            // 声明一个图形对象用于返回
+            Entity entR;
+
+            // 打开事务处理
+            using (Transaction trans = db.TransactionManager.StartTransaction())
+            {
+                // 打开块表
+                BlockTable bt = (BlockTable)trans.GetObject(db.BlockTableId, OpenMode.ForRead);
+                // 打开块表记录
+                BlockTableRecord btr = (BlockTableRecord)trans.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForRead);
+
+                // 打开原对象
+                Entity ent = (Entity)entId.GetObject(OpenMode.ForWrite);
+                Point2d[] ps = db.GetGeometricExtents(ent);
+                TextData tdata = db.GetTextData(entId);
+                double ro = tdata.Rotation;
+
+                // 计算镜像的变换矩阵
+                Point3d p1 = new Point3d((ps[0].X + ps[1].X) / 2, (ps[0].Y + ps[1].Y) / 2, 0);
+                Point3d p2 = new Point3d((ps[0].X + ps[1].X) / 2 + 10 * Math.Cos(ro), (ps[0].Y + ps[1].Y) / 2 + 10 * Math.Sin(ro), 0);
+                Matrix3d mt = Matrix3d.Mirroring(new Line3d(p1, p2));
+                // 执行变换
+                ent.TransformBy(mt);
+                entR = ent;
+
+                trans.Commit();
+            }
+            return entR;
+        }
+        /// <summary>
+        /// 获取实体包围盒-选择集
+        /// </summary>
+        public static Point2d[] GetGeometricExtents(this Database db, SelectionSet sSet)
+        {
+            // 范围对象
+            Extents3d extend = new Extents3d();
+
+            Point2d[] result = new Point2d[2];
+
+            // 判断选择集是否为空
+            if (sSet != null)
+            {
+                // 遍历选择对象
+                foreach (SelectedObject selObj in sSet)
+                {
+                    // 确认返回的是合法的SelectedObject对象  
+                    if (selObj != null) //
+                    {
+                        //开启事务处理
+                        using (Transaction trans = db.TransactionManager.StartTransaction())
+                        {
+                            Entity ent = trans.GetObject(selObj.ObjectId, OpenMode.ForRead) as Entity;
+                            // 获取多个实体合在一起的获取其总范围
+                            extend.AddExtents(ent.GeometricExtents);
+
+                            trans.Commit();
+                        }
+                    }
+                }
+                if (extend != null)
+                {
+                    // 绘制包围盒
+                    result[0] = new Point2d(extend.MinPoint.X, extend.MinPoint.Y);  // 范围最大点
+                    result[1] = new Point2d(extend.MaxPoint.X, extend.MaxPoint.Y);  // 范围最小点
+
+                }
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// 获取实体包围盒-实体
+        /// </summary>
+        public static Point2d[] GetGeometricExtents(this Database db, Entity ent)
+        {
+            // 范围对象
+            Extents3d extend = new Extents3d();
+
+            Point2d[] result = new Point2d[2];
+
+            //开启事务处理
+            using (Transaction trans = db.TransactionManager.StartTransaction())
+            {
+                // 获取多个实体合在一起的获取其总范围
+                extend.AddExtents(ent.GeometricExtents);
+                trans.Commit();
+            }
+
+            if (extend != null)
+            {
+                // 绘制包围盒
+                result[0] = new Point2d(extend.MinPoint.X, extend.MinPoint.Y);  // 范围最大点
+                result[1] = new Point2d(extend.MaxPoint.X, extend.MaxPoint.Y);  // 范围最小点
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// 定义文字属性结构体
+        /// </summary>
+        public struct TextData
+        {
+            public ObjectId TextId;
+            public string Content;
+            public Point3d Position;
+            public double X;
+            public double Y;
+            public double Rotation;
+        }
+
+
+        /// <summary>
+        /// 获取文字及多行文字通用属性
+        /// </summary>
+        public static TextData GetTextData(this Database db, ObjectId Id)
+        {
+            TextData data = new TextData();
+            using (Transaction trans = db.TransactionManager.StartTransaction())
+            {
+                Entity ent = trans.GetObject(Id, OpenMode.ForRead) as Entity;
+                data.TextId = Id;
+
+                if (ent != null && ent.GetType() == typeof(DBText))
+                {
+                    DBText text = ent as DBText;
+                    data.Content = text.TextString;
+                    data.Position = text.Position;
+                    data.X = text.Position.X;
+                    data.Y = text.Position.Y;
+                    data.Rotation = text.Rotation;
+                }
+                else if (ent != null && ent.GetType() == typeof(MText))
+                {
+                    MText mtext = ent as MText;
+                    data.Content = mtext.Text;
+                    data.Position = mtext.Location;
+                    data.X = mtext.Location.X;
+                    data.Y = mtext.Location.Y;
+                    data.Rotation = mtext.Rotation;
+                }
+                trans.Commit();
+            }
+            return data;
+        }
     }
 }
