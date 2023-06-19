@@ -655,15 +655,19 @@ namespace DWG2JSON
         [CommandMethod("CS")]
         public void Test()
         {
-            /*
-            SelectionSet ss = doc.GetSelectionSet("Select");
-            List<BlockReference> EntList = ss.SelectType<BlockReference>();
-            ed.WriteMessage(EntList.Count.ToString());
-            */
-            ObjectId id = doc.GetEntityId("Select");
-            Entity ent = id.GetEntity();
-
-            ed.WriteMessage(ent.IsDrawingBorder().ToString());
+            List<Circle> circleList = db.SelectType<Circle>();
+            foreach (Circle circleEnt in circleList)
+            {
+                SelectionSet ssTemp = null;
+                Extents3d extend = circleEnt.GeometricExtents;
+                Point3d pointMin = extend.MinPoint;
+                Point3d pointMax = extend.MaxPoint;
+                ssTemp = doc.GetWindowSelectionSet(pointMin, pointMax);
+                if (ssTemp != null)
+                {
+                    ed.WriteMessage(ssTemp.Count.ToString());
+                }
+            }
         }
 
         public void WriteToJsonFile(string path, string jsonContents)
