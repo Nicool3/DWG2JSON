@@ -526,41 +526,94 @@ namespace DWG2JSON
         }
 
         /// <summary>
-        /// 选择相似钢筋编号
+        /// 选择具有相同钢筋编号的钢筋块
         /// </summary>
         [CommandMethod("SSBH")]
         public void SelectSimilarReinNum()
         {
-            bool reinOnly = ed.GetBoolKeywordOnScreen("是否只选择包含钢筋信息的块？");
             ObjectId id = doc.GetEntityId("请选择钢筋编号块");
             if (id != null && id!= ObjectId.Null)
             {
-                using (Transaction trans = db.TransactionManager.StartTransaction())
-                {
-                    BlockReference br = (BlockReference)id.GetObject(OpenMode.ForRead);
-                    foreach (ObjectId item in br.AttributeCollection)
+                
+                    using (Transaction trans = db.TransactionManager.StartTransaction())
                     {
-                        AttributeReference AttRef = (AttributeReference)item.GetObject(OpenMode.ForRead);
-                        if (AttRef.Tag.ToString().Contains("钢筋编号"))
+                    if (id.GetObject(OpenMode.ForRead).GetType() == typeof(BlockReference))
+                    {
+                        BlockReference br = (BlockReference)id.GetObject(OpenMode.ForRead);
+                        foreach (ObjectId item in br.AttributeCollection)
                         {
-                            string reinNum = AttRef.TextString;
-                            SelectionSet ssAll = doc.Editor.SelectAll().Value;
-                            List<BlockReference> brList = ssAll.SelectType<BlockReference>();
-                            List<ObjectId> idList = new List<ObjectId>();
-                            foreach (BlockReference subbr in brList)
+                            AttributeReference AttRef = (AttributeReference)item.GetObject(OpenMode.ForRead);
+                            if (AttRef.Tag.ToString().Contains("钢筋编号"))
                             {
-                                foreach (ObjectId subitem in subbr.AttributeCollection)
+                                string reinNum = AttRef.TextString;
+                                SelectionSet ssAll = doc.Editor.SelectAll().Value;
+                                List<BlockReference> brList = ssAll.SelectType<BlockReference>();
+                                List<ObjectId> idList = new List<ObjectId>();
+                                foreach (BlockReference subbr in brList)
                                 {
-                                    AttributeReference subAttRef = (AttributeReference)subitem.GetObject(OpenMode.ForRead);
-                                    if (subAttRef.Tag.ToString().Contains("钢筋编号") && subAttRef.TextString==reinNum) idList.Add(subbr.ObjectId);
+                                    foreach (ObjectId subitem in subbr.AttributeCollection)
+                                    {
+                                        AttributeReference subAttRef = (AttributeReference)subitem.GetObject(OpenMode.ForRead);
+                                        if (subAttRef.Tag.ToString().Contains("钢筋编号") && subAttRef.TextString == reinNum) idList.Add(subbr.ObjectId);
+                                    }
                                 }
+                                ed.WriteMessage("共发现" + idList.Count.ToString() + "条相同的钢筋编号");
+                                ed.SetImpliedSelection(idList.ToArray());
                             }
-                            ed.WriteMessage("共发现"+ idList.Count.ToString() + "条相同的钢筋编号");
-                            ed.SetImpliedSelection(idList.ToArray());
                         }
+                        trans.Commit();
                     }
-                    trans.Commit();
+                    else ed.WriteMessage("需要选择块对象，请重新选择");
                 }
+                
+            }
+        }
+
+        /// <summary>
+        /// 选择具有相同钢筋编号且含有配筋信息的钢筋块
+        /// </summary>
+        [CommandMethod("SSBV")]
+        public void SelectSimilarReinNumWithValue()
+        {
+            ObjectId id = doc.GetEntityId("请选择钢筋编号块");
+            if (id != null && id != ObjectId.Null)
+            {
+                
+                    using (Transaction trans = db.TransactionManager.StartTransaction())
+                    {
+                    if (id.GetObject(OpenMode.ForRead).GetType() == typeof(BlockReference))
+                    {
+                        BlockReference br = (BlockReference)id.GetObject(OpenMode.ForRead);
+                        foreach (ObjectId item in br.AttributeCollection)
+                        {
+                            AttributeReference AttRef = (AttributeReference)item.GetObject(OpenMode.ForRead);
+                            if (AttRef.Tag.ToString().Contains("钢筋编号"))
+                            {
+                                string reinNum = AttRef.TextString;
+                                SelectionSet ssAll = doc.Editor.SelectAll().Value;
+                                List<BlockReference> brList = ssAll.SelectType<BlockReference>();
+                                List<ObjectId> idList = new List<ObjectId>();
+                                foreach (BlockReference subbr in brList)
+                                {
+                                    bool flag1 = false;
+                                    bool flag2 = false;
+                                    foreach (ObjectId subitem in subbr.AttributeCollection)
+                                    {
+                                        AttributeReference subAttRef = (AttributeReference)subitem.GetObject(OpenMode.ForRead);
+                                        if (subAttRef.Tag.ToString().Contains("钢筋编号") && subAttRef.TextString == reinNum) flag1 = true;
+                                        if (subAttRef.Tag.ToString().Equals("钢筋") && subAttRef.TextString != "") flag2 = true;
+                                    }
+                                    if (flag1 && flag2) idList.Add(subbr.ObjectId);
+                                }
+                                ed.WriteMessage("共发现" + idList.Count.ToString() + "条相同的钢筋编号");
+                                ed.SetImpliedSelection(idList.ToArray());
+                            }
+                        }
+                        trans.Commit();
+                    }
+                    else ed.WriteMessage("需要选择块对象，请重新选择");
+                }
+                
             }
         }
 
